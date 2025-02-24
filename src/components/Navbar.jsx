@@ -11,7 +11,7 @@ const Navbar = () => {
           <div>Swift</div>
           <div className="text-[rgb(59,207,161)]">Keys</div>
         </NavLink>
-        <ul className="flex space-x-5">
+        <ul className="flex space-x-10">
           <NavLink to={"/type"} className="flex items-center">
             <Keyboard  size={18} className="mr-1" />
             <p>Type</p>
