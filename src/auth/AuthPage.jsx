@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { signInWithEmailAndPassword, getAuth } from "firebase/auth";
+import { getAuth } from "firebase/auth";
 import { app } from "@/firebase/firebase";
 import SignIn from "./SignIn";
 import SignUp from "./SignUp";
@@ -8,12 +8,6 @@ const AuthPage = () => {
   const [activeTab, setActiveTab] = useState("signin");
 
   const auth = getAuth(app);
-
-  const signInUser = () => {
-    signInWithEmailAndPassword(auth, email, password)
-      .then((value) => console.log("Signin success"))
-      .catch((err) => console.log(err));
-  };
 
   return (
     <div className="h-[650px] flex items-center justify-center">
@@ -56,7 +50,7 @@ const AuthPage = () => {
           </button>
         </div>
 
-        {activeTab==="signin" ? <SignIn /> : <SignUp />}
+        {activeTab === "signin" ? <SignIn /> : <SignUp />}
       </div>
     </div>
   );
