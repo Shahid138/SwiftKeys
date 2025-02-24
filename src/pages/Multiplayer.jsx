@@ -7,8 +7,7 @@ const Multiplayer = () => {
       <>
       {userEmail &&(
         <div className='text-white'>
-        Welcome, {userName}.
-        Your Email is {userEmail}
+        Multiplayer
       </div>
       )}
      </>
