@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Mail, Lock } from "lucide-react";
-import { signInWithEmailAndPassword, getAuth } from "firebase/auth";
+import { signInWithEmailAndPassword, getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { app } from "@/firebase/firebase";
 import { useAppDispatch } from "@/store/hooks";
 import { setActiveUser } from "@/store/slice/userSlice";
@@ -10,6 +10,10 @@ const SignIn = () => {
   const [password, setPassword] = useState("");
   const dispatch = useAppDispatch();
   const auth = getAuth(app);
+
+  const signUpWithGoogle = () => {
+      signInWithPopup(auth, GoogleAuthProvider);
+    };
 
   const signInUser = async (e) => {
     e.preventDefault();
@@ -78,6 +82,7 @@ const SignIn = () => {
       </button>
 
       <button
+        onClick={signUpWithGoogle}
         type="button"
         className="w-full mt-4 py-2 px-4 bg-white hover:bg-gray-100 text-gray-800 rounded flex items-center justify-center space-x-2"
       >

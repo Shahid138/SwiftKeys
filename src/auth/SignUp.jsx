@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Mail, Lock } from "lucide-react";
 import {
   createUserWithEmailAndPassword,
@@ -15,7 +15,8 @@ const SignUp = () => {
   const auth = getAuth(app);
   const googleProvider = new GoogleAuthProvider();
 
-  const createUser = () => {
+  const createUser = async (e) => {
+    e.preventDefault();
     createUserWithEmailAndPassword(auth, email, password);
   };
 

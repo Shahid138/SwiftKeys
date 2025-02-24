@@ -1,4 +1,3 @@
-import React from 'react';
 import { Activity, Users, BarChart2, Settings, Zap, BookType } from 'lucide-react';
 
 function FeatureDisplay() {

@@ -1,13 +1,9 @@
-import React, { useState } from "react";
-import { getAuth } from "firebase/auth";
-import { app } from "@/firebase/firebase";
+import { useState } from "react";
 import SignIn from "./SignIn";
 import SignUp from "./SignUp";
 
 const AuthPage = () => {
   const [activeTab, setActiveTab] = useState("signin");
-
-  const auth = getAuth(app);
 
   return (
     <div className="h-[650px] flex items-center justify-center">
