@@ -14,14 +14,14 @@ const Home = () => {
         <p>real-time stats in a sleek, minimalist interface. </p>
       </div>
       <Link to={"/type"}>
-      <button className=" py-2 px-4  mt-5 bg-emerald-500 hover:bg-emerald-600 text-sm text-white rounded flex items-center justify-center space-x-2 group transition-colors">
+      <button className=" py-2 px-4  mt-[50px] bg-emerald-500 hover:bg-emerald-600 text-sm text-white rounded flex items-center justify-center space-x-2 group transition-colors">
         <span>Start Typing Now</span>
         <span className="group-hover:translate-x-1 transition-transform">
           →
         </span>
       </button>
       </Link>
-      <div className="pt-[80px] text-white text-4xl font-bold">
+      <div className="pt-[50px] text-white text-4xl font-bold">
         <p>Why Choose SwiftKeys?</p>
       </div>
       <Footer/>
