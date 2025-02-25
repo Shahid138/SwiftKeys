@@ -1,5 +1,4 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
-import Profile from './pages/Profile'
 import RootLayout from './layouts/Rootlayout'
 import Type from './pages/Type'
 import Home from './components/Home'
@@ -13,7 +12,6 @@ function App() {
         <Route index element={<Home />} />
         <Route path="type" element={<Type />} />
         <Route path="multiplayer" element={<AuthPage />} />
-        <Route path="profile" element={<Profile />} />
       </Route>
     </Routes>
   </BrowserRouter>

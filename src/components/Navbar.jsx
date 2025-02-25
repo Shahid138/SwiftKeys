@@ -1,4 +1,3 @@
-
 import { useAppSelector } from "@/store/hooks";
 import { selectUserEmail } from "@/store/slice/userSlice";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
@@ -6,10 +5,10 @@ import { Keyboard, Swords, Zap } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 const Navbar = () => {
-   const userEmail = useAppSelector(selectUserEmail);
-  
+  const userEmail = useAppSelector(selectUserEmail);
+
   const getEmailInitial = (email) => {
-    return email ? email.charAt(0).toUpperCase() : '?';
+    return email ? email.charAt(0).toUpperCase() : "?";
   };
 
   return (
@@ -29,17 +28,23 @@ const Navbar = () => {
             <Swords size={20} className="mr-1" />
             <p>Multiplayer</p>
           </NavLink>
-          <NavLink to={"/profile"} className="flex items-center">
+          <NavLink className="flex items-center relative group">
             <Avatar className="w-8">
-              <AvatarImage 
+              <AvatarImage
                 className="rounded-full w-[25px]"
                 src="your-image-url-here"
                 alt="User avatar"
               />
               <AvatarFallback className="bg-gray-600 rounded-full w-[25px] h-[25px] flex items-center justify-center text-sm">
-                { getEmailInitial(userEmail) }
+                {getEmailInitial(userEmail)}
               </AvatarFallback>
             </Avatar>
+            <div className="hidden group-hover:block absolute top-full right-2 pt-2 z-10">
+              <div className="flex flex-col gap-2 w-36 px-5 py-3 bg-gray-500 text-white rounded shadow">
+                <p className="cursor-pointer hover:text-black">Orders</p>
+                <p className="cursor-pointer hover:text-black">Logout</p>
+              </div>
+            </div>
           </NavLink>
         </ul>
       </div>
