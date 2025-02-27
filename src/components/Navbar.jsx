@@ -1,4 +1,5 @@
-import { useAppSelector } from "@/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { setUserLogOutState } from "@/store/slice/userSlice";
 import { selectUserEmail } from "@/store/slice/userSlice";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { Keyboard, Swords, Zap } from "lucide-react";
@@ -6,11 +7,16 @@ import { NavLink } from "react-router-dom";
 
 const Navbar = () => {
   const userEmail = useAppSelector(selectUserEmail);
-
+  const dispatch = useAppDispatch();
+  
   const getEmailInitial = (email) => {
     return email ? email.charAt(0).toUpperCase() : "?";
   };
 
+  const handleLogout = () => {
+    dispatch(setUserLogOutState());
+  };
+  
   return (
     <div className="flex justify-center items-center">
       <div className="flex justify-between text-white text-lg w-[50%] mt-2">
@@ -40,9 +46,9 @@ const Navbar = () => {
               </AvatarFallback>
             </Avatar>
             <div className="hidden group-hover:block absolute top-full right-2 pt-2 z-10">
-              <div className="flex flex-col gap-2 w-36 px-5 py-3 bg-gray-500 text-white rounded shadow">
-                <p className="cursor-pointer hover:text-black">Orders</p>
-                <p className="cursor-pointer hover:text-black">Logout</p>
+              <div className="flex flex-col gap-2 w-36 px-5 py-3 bg-[#3ACFA0] text-white rounded shadow">
+                <p className="cursor-pointer hover:text-black">Profile</p>
+                <p onClick={handleLogout} className="cursor-pointer hover:text-black">Logout</p>
               </div>
             </div>
           </NavLink>
