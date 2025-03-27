@@ -1,8 +1,8 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import RootLayout from './layouts/RootLayout.jsx'
-import Type from './pages/Type'
 import Home from './components/Home'
 import AuthPage from './auth/AuthPage'
+import TypingTest from './pages/TypingTest.jsx'
 function App() {
 
   return (
@@ -10,7 +10,7 @@ function App() {
     <Routes>
       <Route path="/" element={<RootLayout />}>
         <Route index element={<Home />} />
-        <Route path="type" element={<Type />} />
+        <Route path="type" element={<TypingTest />} />
         <Route path="multiplayer" element={<AuthPage />} />
       </Route>
     </Routes>
