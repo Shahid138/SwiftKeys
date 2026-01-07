@@ -1,9 +1,18 @@
-import { Activity, Users, BarChart2, Settings, Zap, BookType } from 'lucide-react';
+import { Activity, Users, BarChart2, Settings, Zap, BookType, LucideIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
+
+interface Feature {
+  title: string;
+  description: string;
+  icon: LucideIcon;
+  color: string;
+  bgHover: string;
+  delay: number;
+}
 
 function Footer() {
   // Feature data for mapping
-  const features = [
+  const features: Feature[] = [
     {
       title: "Real-time\nFeedback",
       description: "Get instant feedback of typing-speed / accuracy.",
@@ -69,17 +78,17 @@ function Footer() {
   // Card animation variants
   const cardVariants = {
     hidden: { y: 20, opacity: 0 },
-    visible: index => ({
+    visible: (index: number) => ({
       y: 0,
       opacity: 1,
-      transition: { 
-        type: "spring", 
-        stiffness: 300, 
-        damping: 24, 
-        delay: index * 0.1 
+      transition: {
+        type: "spring",
+        stiffness: 300,
+        damping: 24,
+        delay: index * 0.1
       }
     }),
-    hover: { 
+    hover: {
       y: -5,
       transition: { type: "spring", stiffness: 400, damping: 10 }
     }
@@ -88,10 +97,10 @@ function Footer() {
   // Icon animation variants
   const iconVariants = {
     initial: { scale: 1 },
-    hover: { 
+    hover: {
       scale: 1.1,
       rotate: [0, -5, 5, 0],
-      transition: { 
+      transition: {
         duration: 0.6,
         ease: "easeInOut"
       }
@@ -99,13 +108,13 @@ function Footer() {
   };
 
   return (
-    <motion.div 
+    <motion.div
       className="mt-5 p-8"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <motion.div 
+      <motion.div
         className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6"
         variants={containerVariants}
         initial="hidden"
@@ -123,7 +132,7 @@ function Footer() {
             <motion.h3 className={`flex content-center ${feature.color} font-medium text-lg whitespace-pre-line mb-2`}>
               <motion.div
                 variants={iconVariants}
-                initial="initial" 
+                initial="initial"
                 whileHover="hover"
                 className="mr-5 mt-3"
               >
@@ -131,7 +140,7 @@ function Footer() {
               </motion.div>
               {feature.title}
             </motion.h3>
-            <motion.p 
+            <motion.p
               className="text-zinc-400 text-sm"
               initial={{ opacity: 0.8 }}
               whileHover={{ opacity: 1 }}
@@ -146,3 +155,5 @@ function Footer() {
 }
 
 export default Footer;
+
+

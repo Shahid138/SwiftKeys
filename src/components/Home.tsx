@@ -48,7 +48,7 @@ const Home = () => {
       <motion.p className="font-bold" variants={itemVariants}>
         Master Your Typing Skills
       </motion.p>
-      
+
       <motion.div className="flex mt-4 space-x-3" variants={itemVariants}>
         <p className="font-bold">with</p>
         <motion.p
@@ -59,12 +59,12 @@ const Home = () => {
           SwiftKeys
         </motion.p>
       </motion.div>
-      
+
       <motion.div className="text-center text-gray-400 text-lg mt-5" variants={itemVariants}>
         <p>Practice typing, challenge friends, and track improvements with</p>
         <p>real-time stats in a sleek, minimalist interface.</p>
       </motion.div>
-      
+
       <motion.div variants={itemVariants}>
         <Link to={"/type"}>
           <motion.button
@@ -85,7 +85,7 @@ const Home = () => {
           </motion.button>
         </Link>
       </motion.div>
-      
+
       <motion.div
         className="pt-[50px] text-white text-4xl font-bold"
         variants={itemVariants}
@@ -96,10 +96,12 @@ const Home = () => {
       >
         <p>Why Choose SwiftKeys?</p>
       </motion.div>
-      
+
       <Footer />
     </motion.div>
   );
 };
 
 export default Home;
+
+

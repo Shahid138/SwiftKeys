@@ -1,38 +1,36 @@
-import { useState } from "react";
+import { useState, FormEvent } from "react";
 import { Mail, Lock } from "lucide-react";
-import { signInWithEmailAndPassword, getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+} from "firebase/auth";
 import { app } from "@/firebase/firebase";
-import { useAppDispatch } from "@/store/hooks";
-import { setActiveUser } from "@/store/slice/userSlice";
 
-const SignIn = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const dispatch = useAppDispatch();
+const SignUp = () => {
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+
   const auth = getAuth(app);
+  const googleProvider = new GoogleAuthProvider();
 
-  const signUpWithGoogle = () => {
-      signInWithPopup(auth, GoogleAuthProvider);
-    };
-
-  const signInUser = async (e) => {
+  const createUser = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     try {
-      await signInWithEmailAndPassword(auth, email, password)
-      .then(
-        dispatch(setActiveUser({userName: "Shahid", userEmail: auth.currentUser.email} ))
-      )
-      
+      await createUserWithEmailAndPassword(auth, email, password);
     } catch (error) {
-      
-      console.error("Sign in error:", error.message);
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+      console.error("Sign up error:", errorMessage);
     }
   };
 
-  
+  const signUpWithGoogle = (): void => {
+    signInWithPopup(auth, googleProvider);
+  };
 
   return (
-    <form onSubmit={(e)=>signInUser(e)} className="space-y-4">
+    <form onSubmit={createUser} className="space-y-4">
       <div className="space-y-2">
         <label className="block text-gray-400 text-sm">Email</label>
         <div className="relative">
@@ -42,11 +40,11 @@ const SignIn = () => {
           <input
             type="email"
             name="email"
-            placeholder="signin@gmail.com"
             onChange={(e) => {
               setEmail(e.target.value);
             }}
             value={email}
+            placeholder="signup@gmail.com"
             className="w-full pl-10 pr-4 py-2 rounded bg-gray-800 border-0 text-white placeholder-gray-500 focus:ring-2 focus:ring-emerald-500"
           />
         </div>
@@ -75,7 +73,7 @@ const SignIn = () => {
         type="submit"
         className="w-full py-2 px-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded flex items-center justify-center space-x-2 group transition-colors"
       >
-        <span>Sign In</span>
+        <span>Sign Up</span>
         <span className="group-hover:translate-x-1 transition-transform">
           →
         </span>
@@ -93,4 +91,6 @@ const SignIn = () => {
   );
 };
 
-export default SignIn;
+export default SignUp;
+
+

@@ -3,7 +3,7 @@ import SignIn from "./SignIn";
 import SignUp from "./SignUp";
 
 const AuthPage = () => {
-  const [activeTab, setActiveTab] = useState("signin");
+  const [activeTab, setActiveTab] = useState<"signin" | "signup">("signin");
 
   return (
     <div className="h-[650px] flex items-center justify-center">
@@ -53,3 +53,5 @@ const AuthPage = () => {
 };
 
 export default AuthPage;
+
+
