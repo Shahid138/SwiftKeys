@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import RootLayout from "./layouts/RootLayout";
-import Home from "./components/Home";
+import Home from "./pages/Home";
 import AuthPage from "./auth/AuthPage";
 import TypingTest from "./pages/TypingTest";
 

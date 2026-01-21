@@ -1,9 +1,8 @@
 import { Link } from "react-router-dom";
-import Footer from "./Footer";
+import Footer from "../components/Footer";
 import { motion } from "framer-motion";
 
 const Home = () => {
-  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -40,19 +39,19 @@ const Home = () => {
 
   return (
     <motion.div
-      className="flex flex-col items-center pt-[100px] text-5xl text-white"
+      className="h-[calc(100vh-64px)] flex flex-col items-center justify-center px-4 overflow-hidden"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
-      <motion.p className="font-bold" variants={itemVariants}>
+      <motion.h1 className="text-4xl sm:text-5xl font-bold text-white text-center mt-36" variants={itemVariants}>
         Master Your Typing Skills
-      </motion.p>
+      </motion.h1>
 
-      <motion.div className="flex mt-4 space-x-3" variants={itemVariants}>
-        <p className="font-bold">with</p>
+      <motion.div className="flex mt-3 space-x-3 text-4xl sm:text-5xl" variants={itemVariants}>
+        <p className="font-bold text-white">with</p>
         <motion.p
-          className="text-[rgb(59,207,161)] font-bold"
+          className="text-emerald-400 font-bold"
           animate={{ y: [0, -3, 0] }}
           transition={{ duration: 2, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
         >
@@ -60,25 +59,26 @@ const Home = () => {
         </motion.p>
       </motion.div>
 
-      <motion.div className="text-center text-gray-400 text-lg mt-5" variants={itemVariants}>
+      <motion.div className="text-center text-gray-400 text-base sm:text-lg mt-4 max-w-2xl" variants={itemVariants}>
         <p>Practice typing, challenge friends, and track improvements with</p>
         <p>real-time stats in a sleek, minimalist interface.</p>
       </motion.div>
 
       <motion.div variants={itemVariants}>
-        <Link to={"/type"}>
+        <Link to="/type">
           <motion.button
-            className="py-2 px-4 mt-[50px] bg-emerald-500 text-sm text-white rounded flex items-center justify-center space-x-2 group"
+            className="py-2 px-4 mt-8 bg-emerald-500 text-sm text-white rounded flex items-center justify-center space-x-2 group"
             variants={buttonVariants}
             whileHover="hover"
             whileTap="tap"
+            aria-label="Start typing practice"
           >
             <span>Start Typing Now</span>
             <motion.span
               variants={arrowVariants}
               initial="initial"
-              inherit="hover"
-              className="group-hover:translate-x-1"
+              className="transition-transform group-hover:translate-x-1"
+              aria-hidden="true"
             >
               →
             </motion.span>
@@ -86,23 +86,19 @@ const Home = () => {
         </Link>
       </motion.div>
 
-      <motion.div
-        className="pt-[50px] text-white text-4xl font-bold"
+      <motion.h2
+        className="pt-8 text-white text-2xl sm:text-3xl font-bold text-center"
         variants={itemVariants}
         initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.8 }}
         transition={{ delay: 0.5, duration: 0.5 }}
       >
-        <p>Why Choose SwiftKeys?</p>
-      </motion.div>
-
-      <Footer />
+        Why Choose SwiftKeys?
+      </motion.h2>
+      <Footer/>
     </motion.div>
   );
 };
 
 export default Home;
-
-
-

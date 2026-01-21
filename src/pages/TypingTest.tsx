@@ -1,382 +1,500 @@
-import { useState, useEffect, useRef, FormEvent, ChangeEvent } from 'react';
-import { faker } from '@faker-js/faker';
-import { Hourglass, Clock, Award, PieChart, RefreshCw } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useRef } from "react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ReferenceLine,
+  ResponsiveContainer,
+} from "recharts";
+import { RotateCcw, Activity, Clock, Award, PieChart } from "lucide-react";
+import { WORD_CORPUS } from "../data/wordCorpus";
+import { generateWords } from "../utils/generateWords";
+
+type AnalyticsPoint = {
+  time: number;
+  charsTyped: number;
+};
 
 const TypingTest = () => {
-  // States
-  const [words, setWords] = useState<string>('');
-  const [userInput, setUserInput] = useState<string>('');
+  const [words, setWords] = useState("");
+  const [userInput, setUserInput] = useState("");
   const [startTime, setStartTime] = useState<Date | null>(null);
-  const [isFinished, setIsFinished] = useState<boolean>(false);
-  const [wpm, setWpm] = useState<number>(0);
-  const [accuracy, setAccuracy] = useState<number>(0);
-  const [timeTaken, setTimeTaken] = useState<number>(0);
-  const [errorCount, setErrorCount] = useState<number>(0);
-  const [wordCount, setWordCount] = useState<number>(10);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [endTime, setEndTime] = useState<Date | null>(null);
+  const [isFinished, setIsFinished] = useState(false);
+  const [duration, setDuration] = useState(10);
+  const [mode, setMode] = useState<"time" | "words">("words");
+  const [visibleStartIndex, setVisibleStartIndex] = useState(0);
+  const [errorCount, setErrorCount] = useState(0);
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+
+  const [analytics, setAnalytics] = useState<AnalyticsPoint[]>([]);
+
   const inputRef = useRef<HTMLInputElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const textContainerRef = useRef<HTMLDivElement>(null);
+  const timerRef = useRef<number | null>(null);
 
-  // Generate random words when component mounts or word count changes
   useEffect(() => {
-    generateWords();
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [wordCount]);
+    resetTest();
+  }, [duration, mode]);
 
-  // Generate random words using Faker with explicit spacing
-  const generateWords = (): void => {
-    setIsLoading(true);
-    // Simulate loading for smoother transitions
-    setTimeout(() => {
-      // Generate random words using Faker with clearer spacing
-      const randomWords: string[] = [];
-      for (let i = 0; i < wordCount; i++) {
-        randomWords.push(faker.word.sample());
+  useEffect(() => {
+    if (textContainerRef.current && words) {
+      const charsPerLine = calculateCharsPerLine();
+      const currentLine = Math.floor(userInput.length / charsPerLine);
+      const startLine = Math.max(0, currentLine - 1);
+      const newStartIndex = startLine * charsPerLine;
+
+      if (newStartIndex !== visibleStartIndex) {
+        setVisibleStartIndex(newStartIndex);
       }
-      const wordList = randomWords.join(' '); // Ensure proper spacing
+    }
+  }, [userInput.length, words]);
 
-      setWords(wordList);
-      setUserInput('');
-      setStartTime(null);
-      setIsFinished(false);
-      setWpm(0);
-      setAccuracy(0);
-      setTimeTaken(0);
-      setErrorCount(0);
-      setIsLoading(false);
-    }, 300);
+  // Timer countdown for time mode
+  useEffect(() => {
+    if (mode === "time" && startTime && !isFinished) {
+      timerRef.current = setInterval(() => {
+        const elapsed = (Date.now() - startTime.getTime()) / 1000;
+        const remaining = duration - elapsed;
+
+        if (remaining <= 0) {
+          setTimeLeft(0);
+          setEndTime(new Date());
+          setIsFinished(true);
+          if (timerRef.current) clearInterval(timerRef.current);
+        } else {
+          setTimeLeft(remaining);
+        }
+      }, 100);
+
+      return () => {
+        if (timerRef.current) clearInterval(timerRef.current);
+      };
+    }
+  }, [mode, startTime, isFinished, duration]);
+
+  const calculateCharsPerLine = () => {
+    const containerWidth = textContainerRef.current?.offsetWidth || 700;
+    const charWidth = 14;
+    return Math.floor(containerWidth / charWidth);
   };
 
-  // Handle input change
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>): void => {
+  const resetTest = () => {
+    // Generate more words for time mode or exact amount for words mode
+    const wordAmount = mode === "time" ? 200 : duration;
+    setWords(generateWords(WORD_CORPUS, wordAmount));
+    setUserInput("");
+    setStartTime(null);
+    setEndTime(null);
+    setIsFinished(false);
+    setAnalytics([]);
+    setVisibleStartIndex(0);
+    setErrorCount(0);
+    setTimeLeft(mode === "time" ? duration : null);
+    if (timerRef.current) clearInterval(timerRef.current);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isFinished) return;
+
     const value = e.target.value;
 
-    // Check for errors (by comparing with the target text)
-    if (value.length > userInput.length) {
-      // Only check the newest character
-      const newChar = value[value.length - 1];
-      const expectedChar = words[value.length - 1];
-
-      if (newChar !== expectedChar) {
-        setErrorCount(prev => prev + 1);
-      }
-    }
-
-    setUserInput(value);
-
-    // Start timer on first keystroke
     if (!startTime && value.length === 1) {
       setStartTime(new Date());
     }
 
-    // Check if test is complete
-    if (value.length === words.length && startTime) {
-      const endTime = new Date();
-      const timeInSeconds = (endTime.getTime() - startTime.getTime()) / 1000;
-      const timeInMinutes = timeInSeconds / 60;
-      const wordsCount = words.split(' ').length;
-      const calculatedWpm = Math.round(wordsCount / timeInMinutes);
+    if (value.length > userInput.length) {
+      const newChar = value[value.length - 1];
+      const expectedChar = words[value.length - 1];
+      if (newChar !== expectedChar) {
+        setErrorCount((prev) => prev + 1);
+      }
+    }
 
-      // Calculate accuracy
-      const totalChars = words.length;
-      const calculatedAccuracy = Math.round(((totalChars - errorCount) / totalChars) * 100);
+    if (startTime) {
+      const elapsed = (Date.now() - startTime.getTime()) / 1000;
 
-      setWpm(calculatedWpm);
-      setAccuracy(calculatedAccuracy);
-      setTimeTaken(timeInSeconds);
+      setAnalytics((prev) => [
+        ...prev,
+        {
+          time: Number(elapsed.toFixed(1)),
+          charsTyped: value.length,
+        },
+      ]);
+    }
+
+    setUserInput(value);
+
+    // Only finish on word completion in words mode
+    if (mode === "words" && value.length === words.length) {
+      setEndTime(new Date());
       setIsFinished(true);
+      if (timerRef.current) clearInterval(timerRef.current);
     }
   };
 
-  // Reset the test
-  const resetTest = (): void => {
-    generateWords();
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  };
+  const renderText = () => {
+    const charsPerLine = calculateCharsPerLine();
+    const linesToShow = 3;
+    const endIndex = Math.min(
+      words.length,
+      visibleStartIndex + charsPerLine * linesToShow
+    );
+    const visibleText = words.slice(visibleStartIndex, endIndex);
 
-  // Change word count
-  const changeWordCount = (count: number): void => {
-    setWordCount(count);
-  };
+    return visibleText.split("").map((char, i) => {
+      const actualIndex = visibleStartIndex + i;
+      let className = "text-gray-600";
 
-  // Render text with highlighting and proper spacing
-  const renderText = (): JSX.Element[] | null => {
-    if (!words) return null;
-
-    const wordsArray = words.split('');
-    const userInputArray = userInput.split('');
-
-    return wordsArray.map((char, index) => {
-      let className = 'text-gray-500'; // Default color for untyped text
-
-      if (index < userInputArray.length) {
-        // Correct character
-        if (char === userInputArray[index]) {
-          className = 'text-green-400';
+      if (actualIndex < userInput.length) {
+        if (char === userInput[actualIndex]) {
+          className = "text-gray-400";
+        } else {
+          className = "text-red-500";
         }
-        // Incorrect character
-        else {
-          className = 'text-red-500';
-        }
+      } else if (actualIndex === userInput.length) {
+        className = "text-white border-b-2 border-gray-400 animate-pulse";
       }
-      // Current position
-      else if (index === userInputArray.length) {
-        className = 'text-white';
-        return (
-          <motion.span
-            key={index}
-            className={`${className} inline-block`}
-            animate={{ opacity: [1, 0.5, 1] }}
-            transition={{ repeat: Infinity, duration: 0.8 }}
-          >
-            {char === ' ' ? '\u00A0' : char}
-          </motion.span>
-        );
-      }
-
-      // Use non-breaking space for space characters to make them visible
-      const displayChar = char === ' ' ? '\u00A0' : char;
 
       return (
-        <motion.span
-          key={index}
-          className={`${className} inline-block ${char === ' ' ? 'mx-1' : ''}`}
-          initial={{ opacity: 0, y: -5 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.01, duration: 0.2 }}
-        >
-          {displayChar}
-        </motion.span>
+        <span key={actualIndex} className={className}>
+          {char}
+        </span>
       );
     });
   };
 
-  // Format seconds to mm:ss
-  const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  // Real-time calculations
+  const currentTime = startTime
+    ? (Date.now() - startTime.getTime()) / 1000
+    : 0;
+
+  const currentWpm =
+    startTime && userInput.length > 0
+      ? Math.round(userInput.length / 5 / (currentTime / 60))
+      : 0;
+
+  const currentAccuracy =
+    userInput.length > 0
+      ? Math.max(
+          0,
+          Number(
+            (((userInput.length - errorCount) / userInput.length) * 100).toFixed(
+              2
+            )
+          )
+        )
+      : 100.0;
+
+  const wpmSeries = analytics.map((p) => {
+    const minutes = p.time / 60;
+    const wpm = minutes > 0 ? p.charsTyped / 5 / minutes : 0;
+
+    return {
+      time: p.time,
+      wpm: Math.round(wpm),
+    };
+  });
+
+  const averageWpm =
+    wpmSeries.length > 0
+      ? wpmSeries.reduce((sum, p) => sum + p.wpm, 0) / wpmSeries.length
+      : 0;
+
+  const totalTime =
+    startTime && endTime ? (endTime.getTime() - startTime.getTime()) / 1000 : 0;
+
+  const finalWpm =
+    totalTime > 0 ? Math.round(userInput.length / 5 / (totalTime / 60)) : 0;
+
+  const accuracy =
+    userInput.length > 0
+      ? Number(
+          (((userInput.length - errorCount) / userInput.length) * 100).toFixed(2)
+        )
+      : 100.0;
+
+  const formatTime = (seconds: number) => {
+    const secs = Math.floor(seconds);
+    return `${secs}s`;
   };
 
-  // Word count button variants
-  const buttonVariants = {
-    active: {
-      backgroundColor: "#2563eb",
-      scale: 1.05,
-      transition: { type: "spring", stiffness: 500 }
-    },
-    inactive: {
-      backgroundColor: "#1f2937",
-      scale: 1
-    },
-    hover: {
-      scale: 1.1,
-      transition: { type: "spring", stiffness: 400 }
-    }
-  };
+  const wordsTyped = userInput.trim().split(/\s+/).filter(w => w.length > 0).length;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6 }}
-      className="max-w-2xl mx-auto p-6 mt-16 bg-[rgb(21,21,20)] rounded-xl shadow-2xl"
-    >
-      <motion.div
-        className="flex space-x-4 justify-center items-center mb-8"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3, duration: 0.5 }}
-      >
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-        >
-          <Hourglass size={28} className="text-blue-400" />
-        </motion.div>
-        <span className="px-3 py-2 rounded-xl text-sm text-white bg-gray-800 font-medium">Words</span>
-
-        {[10, 20, 30].map(count => (
-          <motion.button
-            key={count}
-            variants={buttonVariants}
-            initial="inactive"
-            animate={wordCount === count ? "active" : "inactive"}
-            whileHover="hover"
-            whileTap={{ scale: 0.95 }}
-            className="px-4 py-2 rounded-xl text-sm text-white font-medium"
-            onClick={() => changeWordCount(count)}
+    <div className="min-h-[70dvh] text-white flex items-center justify-center p-4">
+      <div className="max-w-6xl w-full">
+        {/* MODE TOGGLE */}
+        <div className="flex gap-4 mb-8 justify-center">
+          <button
+            onClick={() => setMode("time")}
+            disabled={startTime !== null && !isFinished}
+            className={`flex items-center gap-2 px-4 py-2 rounded ${
+              mode === "time"
+                ? "text-[rgb(59,207,161)] border-b-2 border-[rgb(59,207,161)]"
+                : "text-gray-500"
+            } disabled:opacity-50`}
           >
-            {count}
-          </motion.button>
-        ))}
-      </motion.div>
-
-      {/* Text display with overlay input */}
-      <AnimatePresence mode="wait">
-        {isLoading ? (
-          <motion.div
-            key="loading"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="flex justify-center items-center p-4 bg-[rgb(21,21,20)] text-xl rounded mb-4 h-32"
+            <Clock size={16} />
+            <span className="text-sm">time</span>
+          </button>
+          <button
+            onClick={() => setMode("words")}
+            disabled={startTime !== null && !isFinished}
+            className={`flex items-center gap-2 px-4 py-2 rounded ${
+              mode === "words"
+                ? "text-[rgb(59,207,161)] border-b-2 border-[rgb(59,207,161)]"
+                : "text-gray-500"
+            } disabled:opacity-50`}
           >
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-            >
-              <RefreshCw size={30} className="text-blue-400" />
-            </motion.div>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="content"
-            ref={containerRef}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="p-6 bg-[rgb(25,26,25)] text-xl font-mono rounded-lg mb-6 relative h-36 overflow-hidden cursor-text border border-gray-800 shadow-inner"
-            onClick={() => inputRef.current && inputRef.current.focus()}
-          >
-            <div className="text-2xl leading-relaxed tracking-wide whitespace-pre">
-              {renderText()}
-            </div>
+            <span className="text-lg">T</span>
+            <span className="text-sm">words</span>
+          </button>
+        </div>
 
-            {/* Hidden input that receives typing */}
-            <input
-              ref={inputRef}
-              type="text"
-              value={userInput}
-              onChange={handleInputChange}
-              disabled={isFinished}
-              className="absolute opacity-0 top-0 left-0 h-full w-full cursor-text"
-              autoComplete="off"
-              autoCapitalize="off"
-              autoCorrect="off"
-              spellCheck="false"
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Progress indicator when typing */}
-      {startTime && !isFinished && (
-        <motion.div
-          className="mb-6 bg-gray-800 h-2 rounded-full overflow-hidden"
-          initial={{ width: 0 }}
-          animate={{ width: "100%" }}
-          transition={{ duration: 0.5 }}
-        >
-          <motion.div
-            className="bg-blue-500 h-full"
-            initial={{ width: "0%" }}
-            animate={{ width: `${(userInput.length / words.length) * 100}%` }}
-            transition={{ type: "spring", stiffness: 50 }}
-          ></motion.div>
-        </motion.div>
-      )}
-
-      {/* Results */}
-      <AnimatePresence>
-        {isFinished && (
-          <motion.div
-            className="mb-6 p-6 bg-[rgb(25,26,25)] rounded-lg border border-gray-800 shadow-lg"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ type: "spring", stiffness: 100 }}
-          >
-            <motion.h2
-              className="text-center font-bold text-white text-2xl mb-6"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              Your Results
-            </motion.h2>
-
-            <div className="grid grid-cols-3 gap-6">
-              {[
-                { Icon: Clock, color: "blue", label: "Time", value: formatTime(timeTaken) },
-                { Icon: Award, color: "green", label: "WPM", value: wpm },
-                { Icon: PieChart, color: "yellow", label: "Accuracy", value: `${accuracy}%` }
-              ].map((item, index) => (
-                <motion.div
-                  key={item.label}
-                  className="flex flex-col items-center"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 + index * 0.2, type: "spring" }}
+        {/* DURATION/COUNT OPTIONS */}
+        <div className="flex gap-4 mb-8 justify-center">
+          {mode === "words" ? (
+            <>
+              {[10, 25, 50, 100].map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setDuration(c)}
+                  disabled={startTime !== null && !isFinished}
+                  className={`px-4 py-1 rounded text-sm ${
+                    c === duration
+                      ? "bg-gray-700 text-white"
+                      : "text-gray-500 hover:text-gray-300"
+                  } disabled:opacity-50`}
                 >
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.8 + index * 0.2, type: "spring", stiffness: 200 }}
-                  >
-                    <item.Icon size={30} className={`text-${item.color}-400 mb-2`} />
-                  </motion.div>
-                  <p className="text-white font-medium">{item.label}</p>
-                  <motion.p
-                    className={`text-3xl text-${item.color}-400 font-bold`}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 1 + index * 0.2 }}
-                  >
-                    {item.value}
-                  </motion.p>
-                </motion.div>
+                  {c}
+                </button>
               ))}
+            </>
+          ) : (
+            <>
+              {[15, 30, 60, 120].map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setDuration(t)}
+                  disabled={startTime !== null && !isFinished}
+                  className={`px-4 py-1 rounded text-sm ${
+                    t === duration
+                      ? "bg-gray-700 text-white"
+                      : "text-gray-500 hover:text-gray-300"
+                  } disabled:opacity-50`}
+                >
+                  {t}
+                </button>
+              ))}
+            </>
+          )}
+        </div>
+
+        {/* TYPING AREA */}
+        <div
+          onClick={() => inputRef.current?.focus()}
+          className="bg-transparent mb-8 cursor-text overflow-hidden"
+          style={{ height: '180px' }}
+        >
+          <div
+            ref={textContainerRef}
+            className="font-mono text-2xl leading-relaxed break-words max-w-3xl mx-auto tracking-wide"
+          >
+            {renderText()}
+          </div>
+
+          <input
+            ref={inputRef}
+            value={userInput}
+            onChange={handleInputChange}
+            disabled={isFinished}
+            className="sr-only"
+            spellCheck={false}
+            autoComplete="off"
+            aria-label="Type the text shown above"
+          />
+        </div>
+
+        {/* REAL-TIME STATS */}
+        <div className="flex items-center justify-center gap-8 text-sm text-gray-500 mb-8">
+          <div>
+            <span className="text-[rgb(59,207,161)]">
+              {mode === "time" ? "Time Left:" : "Time:"}
+            </span>{" "}
+            {mode === "time" && timeLeft !== null
+              ? formatTime(timeLeft)
+              : formatTime(currentTime)}
+          </div>
+          <div className="text-gray-700">|</div>
+          <div>
+            <span className="text-[rgb(59,207,161)]">WPM:</span> {currentWpm}
+          </div>
+          <div className="text-gray-700">|</div>
+          <div>
+            <span className="text-[rgb(59,207,161)]">Accuracy:</span> {currentAccuracy}%
+          </div>
+          {mode === "time" && (
+            <>
+              <div className="text-gray-700">|</div>
+              <div>
+                <span className="text-[rgb(59,207,161)]">Words:</span> {wordsTyped}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* RESET BUTTON */}
+        <div className="flex justify-center mb-8">
+          <button
+            onClick={resetTest}
+            className="flex items-center gap-2 text-gray-500 hover:text-gray-300 transition"
+            aria-label="Reset test"
+          >
+            <RotateCcw size={16} />
+          </button>
+        </div>
+
+        {/* PERFORMANCE GRAPH */}
+        {isFinished && (
+          <div className="bg-gray-800 p-8 rounded-lg mt-12">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <Activity className="text-blue-400" size={20} />
+                <h2 className="text-xl font-semibold">Performance Analysis</h2>
+              </div>
+
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-2">
+                  <Clock className="text-blue-400" size={18} />
+                  <div>
+                    <p className="text-xs text-gray-400">Time</p>
+                    <p className="text-lg font-bold text-blue-400">
+                      {formatTime(totalTime)}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Award className="text-green-400" size={18} />
+                  <div>
+                    <p className="text-xs text-gray-400">WPM</p>
+                    <p className="text-lg font-bold text-green-400">
+                      {finalWpm}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <PieChart className="text-[rgb(59,207,161)]" size={18} />
+                  <div>
+                    <p className="text-xs text-gray-400">Accuracy</p>
+                    <p className="text-lg font-bold text-[rgb(59,207,161)]">
+                      {accuracy}%
+                    </p>
+                  </div>
+                </div>
+
+                {mode === "time" && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-blue-400 text-lg">📝</span>
+                    <div>
+                      <p className="text-xs text-gray-400">Words</p>
+                      <p className="text-lg font-bold text-blue-400">
+                        {wordsTyped}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
-            <motion.div
-              className="mt-6 bg-[rgb(30,31,30)] p-4 rounded-lg text-center"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1.5 }}
-            >
-              <p className="text-gray-300">
-                You typed <span className="text-white font-bold">{words.split(' ').length}</span> words in <span className="text-white font-bold">{timeTaken.toFixed(1)}</span> seconds with <span className="text-white font-bold">{errorCount}</span> errors.
-              </p>
-            </motion.div>
-          </motion.div>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart
+                data={wpmSeries}
+                margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+              >
+                <XAxis
+                  dataKey="time"
+                  stroke="#9ca3af"
+                  tick={{ fill: "#9ca3af", fontSize: 12 }}
+                  label={{
+                    value: "Time (seconds)",
+                    position: "insideBottom",
+                    offset: -5,
+                    fill: "#9ca3af",
+                    fontSize: 12,
+                  }}
+                />
+                <YAxis
+                  stroke="#9ca3af"
+                  tick={{ fill: "#9ca3af", fontSize: 12 }}
+                  label={{
+                    value: "WPM",
+                    angle: -90,
+                    position: "insideLeft",
+                    fill: "#9ca3af",
+                    fontSize: 12,
+                  }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1f2937",
+                    border: "1px solid #374151",
+                    borderRadius: "8px",
+                    color: "#fff",
+                  }}
+                  labelStyle={{ color: "#9ca3af" }}
+                  formatter={(value: number | undefined) =>
+                    value !== undefined
+                      ? [`${value} WPM`, "Speed"]
+                      : ["0 WPM", "Speed"]
+                  }
+                  labelFormatter={(label) => `Time: ${label}s`}
+                />
+
+                <ReferenceLine
+                  y={averageWpm}
+                  stroke="#f59e0b"
+                  strokeDasharray="5 5"
+                  strokeWidth={2}
+                  label={{
+                    value: `Avg: ${Math.round(averageWpm)} WPM`,
+                    position: "right",
+                    fill: "#f59e0b",
+                    fontSize: 12,
+                  }}
+                />
+
+                <Line
+                  type="monotone"
+                  dataKey="wpm"
+                  stroke="#10b981"
+                  strokeWidth={2.5}
+                  dot={false}
+                  activeDot={{ r: 6, fill: "#10b981" }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+
+            <div className="mt-4 flex items-center justify-center gap-6 text-sm">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-0.5 bg-green-500"></div>
+                <span className="text-gray-400">Speed</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-0.5 border-t-2 border-dashed border-amber-500"></div>
+                <span className="text-gray-400">AVG</span>
+              </div>
+            </div>
+          </div>
         )}
-      </AnimatePresence>
-
-      {/* Reset button */}
-      <motion.div className="flex justify-center">
-        <motion.button
-          onClick={resetTest}
-          className="px-6 py-3 bg-[rgb(59,207,161)] text-white font-medium rounded-lg hover:bg-emerald-500 transition shadow-lg"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: isFinished ? 1.8 : 0.5 }}
-        >
-          {isFinished ? "Try Again" : "Reset"}
-        </motion.button>
-      </motion.div>
-
-      {!isFinished && !startTime && (
-        <motion.p
-          className="text-gray-400 text-center mt-6 text-sm"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
-        >
-          Click and start typing to begin
-        </motion.p>
-      )}
-    </motion.div>
+      </div>
+    </div>
   );
 };
 
 export default TypingTest;
-
-
-

@@ -28,12 +28,12 @@ const Navbar = () => {
 
   return (
     <motion.div
-      className="flex justify-center items-center"
+      className="flex justify-center items-center px-4 sm:px-6 lg:px-8"
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="flex justify-between text-white text-lg w-[50%] mt-2">
+      <div className="flex justify-between text-white text-lg w-full max-w-6xl mt-2">
         <NavLink to={"/"} className="flex text-xl">
           <motion.div
             className="flex items-center"
@@ -138,6 +138,3 @@ const Navbar = () => {
 };
 
 export default Navbar;
-
-
-
